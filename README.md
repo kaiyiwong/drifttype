@@ -4,6 +4,8 @@ Spatial text layouts for the web. Text that follows paths and responds to pointe
 
 Zero dependencies. Accessibility built in.
 
+[Live demo](https://kaiyiwong.github.io/drifttype/)
+
 ## Path layout
 
 Text flows along an SVG bezier path. Each character is positioned and rotated to follow the curve tangent.
