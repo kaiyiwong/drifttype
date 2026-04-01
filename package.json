@@ -1,6 +1,6 @@
 {
   "name": "drifttype",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Spatial text layouts for the web. Text on paths and pointer-reactive typography with zero dependencies.",
   "author": "Kaiyi Wong",
   "license": "MIT",
@@ -16,7 +16,10 @@
     "canvas",
     "layout",
     "animation",
-    "accessibility"
+    "accessibility",
+    "creative-coding",
+    "pointer",
+    "react"
   ],
   "type": "module",
   "main": "dist/index.js",
