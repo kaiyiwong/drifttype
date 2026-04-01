@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>drifttype</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d0d0d;
+      color: #e8e4df;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4rem 2rem;
+    }
+
+    h1 {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 400;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+      margin-bottom: 3rem;
+    }
+
+    /* ---- Tabs ---- */
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 4rem;
+    }
+
+    .tab {
+      background: none;
+      border: 1px solid #222;
+      color: #555;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.65rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.6rem 1.6rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .tab:first-child { border-radius: 3px 0 0 3px; }
+    .tab:last-child { border-radius: 0 3px 3px 0; }
+    .tab + .tab { margin-left: -1px; }
+
+    .tab:hover { color: #888; }
+
+    .tab[aria-selected="true"] {
+      color: #e8e4df;
+      border-color: #444;
+      z-index: 1;
+      position: relative;
+    }
+
+    /* ---- Panels ---- */
+
+    .panel {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 4rem;
+      width: 100%;
+    }
+
+    .panel[data-active] {
+      display: flex;
+    }
+
+    .demo {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .demo svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .demo svg text {
+      font-family: 'Instrument Serif', serif;
+    }
+
+    .label {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>drifttype</h1>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-panel="path">Path</button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="pointer">Reactive</button>
+  </nav>
+
+  <!-- Path demos -->
+  <div class="panel" id="panel-path" role="tabpanel" data-active>
+    <div class="demo" id="demo-wave">
+      <div class="label">wave</div>
+      <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="demo" id="demo-arc">
+      <div class="label">arc</div>
+      <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="demo" id="demo-serpentine">
+      <div class="label">serpentine</div>
+      <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <!-- Pointer demos -->
+  <div class="panel" id="panel-pointer" role="tabpanel">
+    <div class="demo" id="demo-repel">
+      <div class="label">repel — move your cursor over the text</div>
+      <svg viewBox="0 0 800 120" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="demo" id="demo-attract">
+      <div class="label">attract</div>
+      <svg viewBox="0 0 800 120" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="demo" id="demo-orbit">
+      <div class="label">orbit</div>
+      <svg viewBox="0 0 800 120" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <script type="module">
+    import { computePathLayout } from './dist/core/path.js';
+    import { createCanvasMeasure, renderToSvg } from './dist/renderers/svg.js';
+    import { mountSemantic } from './dist/a11y/semantic.js';
+    import { initPointerLayout, stepPointerLayout, isAtRest } from './dist/core/pointer.js';
+
+    // ---- Tab switching ----
+
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.panel');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.setAttribute('aria-selected', 'false'));
+        panels.forEach((p) => p.removeAttribute('data-active'));
+
+        tab.setAttribute('aria-selected', 'true');
+        document.getElementById(`panel-${tab.dataset.panel}`).setAttribute('data-active', '');
+      });
+    });
+
+    // ---- Path demos ----
+
+    const PATHS = {
+      wave: {
+        d: 'M 50 120 C 150 20, 250 20, 350 120 S 550 220, 650 120',
+        text: 'text that drifts along a wave',
+        font: '32px Instrument Serif',
+      },
+      arc: {
+        d: 'M 50 250 Q 400 -50 750 250',
+        text: 'a wide graceful arc overhead',
+        font: '36px Instrument Serif',
+      },
+      serpentine: {
+        d: 'M 30 100 C 130 30, 200 30, 270 100 S 410 170, 480 100 S 620 30, 700 100',
+        text: 'winding through gentle curves',
+        font: '28px Instrument Serif',
+      },
+    };
+
+    for (const [name, cfg] of Object.entries(PATHS)) {
+      const container = document.getElementById(`demo-${name}`);
+      const svg = container.querySelector('svg');
+      const measure = createCanvasMeasure(cfg.font);
+
+      const layout = computePathLayout(cfg.text, cfg.d, measure, 1.1, 0, 'center');
+
+      renderToSvg(svg, layout, {
+        font: cfg.font,
+        fill: '#e8e4df',
+        debugPath: true,
+        pathData: cfg.d,
+      });
+
+      mountSemantic(container, cfg.text);
+    }
+
+    // ---- Pointer-reactive demos ----
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const POINTER_FONT = '36px Instrument Serif';
+    const pointerMeasure = createCanvasMeasure(POINTER_FONT);
+
+    const POINTER_DEMOS = [
+      { id: 'demo-repel', mode: 'repel', text: 'hover here and watch me scatter' },
+      { id: 'demo-attract', mode: 'attract', text: 'come closer, i won\'t bite' },
+      { id: 'demo-orbit', mode: 'orbit', text: 'round and round we go' },
+    ];
+
+    for (const demo of POINTER_DEMOS) {
+      const container = document.getElementById(demo.id);
+      const svg = container.querySelector('svg');
+      const g = document.createElementNS(SVG_NS, 'g');
+      g.setAttribute('aria-hidden', 'true');
+      svg.appendChild(g);
+
+      let state = initPointerLayout(demo.text, pointerMeasure, demo.mode, 1.05);
+
+      // Center the text in the viewbox
+      const totalWidth = state.glyphs.length > 0
+        ? state.glyphs[state.glyphs.length - 1].position.x
+          + state.glyphs[state.glyphs.length - 1].metrics.width / 2
+        : 0;
+      const offsetX = (800 - totalWidth) / 2;
+      const offsetY = 60;
+      for (const gl of state.glyphs) {
+        gl.base = { x: gl.base.x + offsetX, y: gl.base.y + offsetY };
+        gl.position = { ...gl.base };
+      }
+
+      // Create SVG text nodes
+      const textNodes = [];
+      for (const gl of state.glyphs) {
+        if (gl.char.trim() === '') { textNodes.push(null); continue; }
+        const t = document.createElementNS(SVG_NS, 'text');
+        t.setAttribute('font', POINTER_FONT);
+        t.setAttribute('fill', '#e8e4df');
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('dominant-baseline', 'central');
+        t.setAttribute('font-family', 'Instrument Serif, serif');
+        t.textContent = gl.char;
+        g.appendChild(t);
+        textNodes.push(t);
+      }
+
+      function updateNodes() {
+        for (let i = 0; i < state.glyphs.length; i++) {
+          const node = textNodes[i];
+          if (!node) continue;
+          const gl = state.glyphs[i];
+          node.setAttribute(
+            'transform',
+            `translate(${gl.position.x}, ${gl.position.y}) rotate(${(gl.angle * 180) / Math.PI})`
+          );
+        }
+      }
+      updateNodes();
+
+      // Pointer tracking — convert page coords to SVG viewBox coords
+      let animating = false;
+      svg.addEventListener('pointermove', (e) => {
+        const rect = svg.getBoundingClientRect();
+        const scaleX = 800 / rect.width;
+        const scaleY = 120 / rect.height;
+        const pointer = {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY,
+        };
+        state = { ...state, pointer };
+        if (!animating) startLoop();
+      });
+
+      svg.addEventListener('pointerleave', () => {
+        state = { ...state, pointer: null };
+      });
+
+      function startLoop() {
+        animating = true;
+        let lastTime = performance.now();
+
+        function tick(now) {
+          const dt = Math.min((now - lastTime) / 1000, 0.05);
+          lastTime = now;
+
+          state = stepPointerLayout(state, state.pointer, 120, 0.6, dt);
+          updateNodes();
+
+          if (!state.pointer && isAtRest(state)) {
+            animating = false;
+            return;
+          }
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+
+      mountSemantic(container, demo.text);
+    }
+  </script>
+</body>
+</html>
