@@ -6,6 +6,18 @@ Zero dependencies. Accessibility built in.
 
 [Live demo](https://kaiyiwong.github.io/drifttype/)
 
+**Repel**
+
+![repel](demos/drifttype1.gif)
+
+**Attract**
+
+![attract](demos/drifttype2.gif)
+
+**Orbit**
+
+![orbit](demos/drifttype3.gif)
+
 ## Path layout
 
 Text flows along an SVG bezier path. Each character is positioned and rotated to follow the curve tangent.
