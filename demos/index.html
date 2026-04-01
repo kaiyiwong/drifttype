@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>drifttype</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d0d0d;
+      color: #e8e4df;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4rem;
+      padding: 4rem 2rem;
+    }
+
+    h1 {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-weight: 400;
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #555;
+    }
+
+    .demo {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .demo svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .demo svg text {
+      font-family: 'Instrument Serif', serif;
+    }
+
+    .label {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #444;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>drifttype</h1>
+
+  <div class="demo" id="demo-wave">
+    <div class="label">wave</div>
+    <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <div class="demo" id="demo-arc">
+    <div class="label">arc</div>
+    <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <div class="demo" id="demo-serpentine">
+    <div class="label">serpentine</div>
+    <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <script type="module">
+    import { computePathLayout } from '../dist/core/path.js';
+    import { createCanvasMeasure, renderToSvg } from '../dist/renderers/svg.js';
+    import { mountSemantic } from '../dist/a11y/semantic.js';
+
+    const PATHS = {
+      wave: {
+        d: 'M 50 120 C 150 20, 250 20, 350 120 S 550 220, 650 120',
+        text: 'text that drifts along a wave',
+        font: '32px Instrument Serif',
+      },
+      arc: {
+        d: 'M 50 250 Q 400 -50 750 250',
+        text: 'a wide graceful arc overhead',
+        font: '36px Instrument Serif',
+      },
+      serpentine: {
+        d: 'M 30 100 C 130 30, 200 30, 270 100 S 410 170, 480 100 S 620 30, 700 100',
+        text: 'winding through gentle curves',
+        font: '28px Instrument Serif',
+      },
+    };
+
+    for (const [name, cfg] of Object.entries(PATHS)) {
+      const container = document.getElementById(`demo-${name}`);
+      const svg = container.querySelector('svg');
+      const measure = createCanvasMeasure(cfg.font);
+
+      const layout = computePathLayout(cfg.text, cfg.d, measure, 1.1, 0, 'center');
+
+      renderToSvg(svg, layout, {
+        font: cfg.font,
+        fill: '#e8e4df',
+        debugPath: true,
+        pathData: cfg.d,
+      });
+
+      // Accessible text for each demo
+      mountSemantic(container, cfg.text);
+    }
+  </script>
+</body>
+</html>
