@@ -118,6 +118,12 @@ npm install drifttype
 
 React components require `react >= 18` as a peer dependency.
 
+## Development
+
+```
+npm test
+```
+
 ## License
 
 MIT

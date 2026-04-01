@@ -36,7 +36,8 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "tsc && node --experimental-strip-types --test tests/*.test.ts"
   },
   "peerDependencies": {
     "react": ">=18"
