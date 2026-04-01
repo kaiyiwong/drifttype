@@ -1,0 +1,10 @@
+src/
+tests/
+demos/
+benchmarks/
+.github/
+.claude/
+tsconfig.json
+CLAUDE.md
+TASTE.md
+.DS_Store
